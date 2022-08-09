@@ -17,6 +17,7 @@ declare module "hardhat/types/config" {
     except?: Array<string>;
     ignoreMocks?: boolean;
     runOnCompile?: boolean;
+    sizeInBytes?: boolean;
   }
   // And we extend the HardhatUserConfig
   export interface HardhatUserConfig {
@@ -34,6 +35,7 @@ declare module "hardhat/types/config" {
     except: Array<string>;
     ignoreMocks: boolean;
     runOnCompile: boolean;
+    sizeInBytes: boolean;
   }
   export interface HardhatConfig {
     contractSize: HardhatContractSizeConfig;
