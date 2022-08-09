@@ -17,7 +17,7 @@ const PLUGIN_NAME = pjson.name;
 const DEFAULT_MAX_CONTRACT_SIZE_IN_KIB = 24;
 const VALUE_BYTES = 1024;
 
-const isValidCheckMaxSize = (checkMaxSize: boolean): boolean => {
+const isValidCheckMaxSize = (checkMaxSize: boolean | number): boolean => {
   if (checkMaxSize === undefined) return true;
   return checkMaxSize === true || !Number.isNaN(checkMaxSize);
 };
@@ -70,7 +70,7 @@ const convertToByte = (valueKib: number) => {
 }
   
 const formatKiBCodeSize = (kibteCodeSize: number) => {
-return `${kibteCodeSize.toFixed(2)} KiB`
+return `${kibteCodeSize.toFixed(2)}`
 }
 
 const computeByteCodeSizeInKiB = (byteCode: any) => {

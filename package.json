@@ -36,23 +36,23 @@
     "README.md"
   ],
   "devDependencies": {
-    "@types/chai": "^4.1.7",
-    "@types/fs-extra": "^5.0.4",
-    "@types/mocha": "^5.2.6",
-    "@types/node": "^8.10.38",
+    "@types/chai": "^4.3.3",
+    "@types/fs-extra": "^9.0.13",
+    "@types/mocha": "^9.1.1",
+    "@types/node": "^18.6.5",
     "@types/util.promisify": "^1.0.4",
-    "chai": "^4.2.0",
-    "hardhat": "^2.0.0",
-    "mocha": "^7.1.2",
-    "prettier": "2.0.5",
-    "ts-node": "^8.1.0",
-    "tslint": "^5.16.0",
+    "chai": "^4.3.6",
+    "hardhat": "^2.10.1",
+    "mocha": "^10.0.0",
+    "prettier": "2.7.1",
+    "ts-node": "^10.9.1",
+    "tslint": "^5.20.1",
     "tslint-config-prettier": "^1.18.0",
-    "tslint-plugin-prettier": "^2.0.1",
-    "typescript": "^4.0.3"
+    "tslint-plugin-prettier": "^2.3.0",
+    "typescript": "^4.7.4"
   },
   "peerDependencies": {
-    "hardhat": "^2.0.0"
+    "hardhat": "^2.10.1"
   },
   "dependencies": {
     "cli-table3": "^0.6.2"

@@ -9,5 +9,5 @@ export const contractSize: HardhatContractSizeUserConfig = {
   contracts: [],
   except: [],
   ignoreMocks: false,
-  sizeInBytes: false,
+  sizeInBytes: false
 };
