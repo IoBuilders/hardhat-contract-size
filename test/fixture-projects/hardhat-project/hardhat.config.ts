@@ -2,15 +2,12 @@
 import { HardhatUserConfig } from "hardhat/types";
 
 import "../../../src/index";
+import { contractSize } from "./contract.config";
 
 const config: HardhatUserConfig = {
   solidity: "0.7.3",
   defaultNetwork: "hardhat",
-  contractSize: {
-    alphaSort: false,
-    runOnCompile: false,
-    disambiguatePaths: false,
-  }
+  contractSize: contractSize
 };
 
 export default config;
