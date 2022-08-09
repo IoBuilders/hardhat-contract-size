@@ -14,7 +14,7 @@ extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) =>
   const disambiguatePaths = userConfig.contractSize?.disambiguatePaths ?? false;
   const except = userConfig.contractSize?.except ?? [];
   const ignoreMocks = userConfig.contractSize?.ignoreMocks ?? false;
-  const runOnCompile = userConfig.contractSize?.runOnCompile ?? false;
+  const runOnCompile = userConfig.contractSize?.runOnCompile ?? true;
   const sizeInBytes = userConfig.contractSize?.sizeInBytes ?? false;
 
   configEntry.alphaSort = alphaSort;
