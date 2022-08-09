@@ -30,7 +30,7 @@ You can modify the hardhat.config.js file with the following options:
     contractSize: {
         alphaSort: true,
         checkMaxSize: true,
-        contracts: ["ERC20.sol"],
+        contracts: ["HTS.sol"],
         disambiguatePaths: false,
         ignoreMocks: true,
         except: ["ERC20*."], // We want to exclude all contracts that start with ERC20,
