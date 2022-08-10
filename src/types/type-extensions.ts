@@ -10,7 +10,7 @@ declare module "hardhat/types/config" {
 
   // We are creating a new interface for the configuration options of the plugin
   export interface HardhatContractSizeUserConfig {
-    alphaSort?: boolean;
+    sort?: string | boolean;
     contracts?: Array<string>;
     checkMaxSize?: boolean | number;
     disambiguatePaths?: boolean;
@@ -28,7 +28,7 @@ declare module "hardhat/types/config" {
   // after it has been resolved. This is the type used during the execution
   // of tasks, tests and scripts.
   export interface HardhatContractSizeConfig {
-    alphaSort: boolean;
+    sort: string | boolean;
     contracts: Array<string>;
     checkMaxSize: boolean | number;
     disambiguatePaths: boolean;

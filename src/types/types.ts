@@ -3,3 +3,7 @@ export interface TableContract {
   nameContract: string;
   name: string;
 }
+export interface TableData {
+  size: number | string;
+  name: string;
+}

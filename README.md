@@ -28,7 +28,7 @@ You can modify the hardhat.config.js file with the following options:
 
 
     contractSize: {
-        alphaSort: true,
+        sort: "size,asc",
         checkMaxSize: true,
         contracts: ["HTS.sol"],
         disambiguatePaths: false,
@@ -45,7 +45,7 @@ You can pass some arguments to the command, for example:
 
 | Option | Description | Default |
 |--|--|--|
-| `alphaSort` | Sort table entries in alphabetical order. The table is sorted by size by default. | `false` |
+| `sort` | Sort table entries by name or size and ascendant or descendant order. The table is sorted by size ascendant by default. | `size,asc` |
 | `checkMaxSize` | Check that the smart contracts aren't bigger than the allowed maximum contract size of the Ethereum Mainnet (`24 KiB = 24576 bytes`) | `false` |
 | `contracts` | Array of string matchers (regex) to determine what contracts to include `*.Mock.sol,ERC20`. | `[]` |
 | `disambiguatePaths` | Whether to output the full path to the compilation artifact (relative to the Hardhat root directory). | `false` |
@@ -78,10 +78,10 @@ You can pass some arguments to the command, for example:
     }
     };
 
-### Alpha sort
-By default the plugin sort contracts by its size, but can be changed to order alphabetically.
+### Sort
+By default the plugin sort contracts by its size ascendant, but can be changed to order by name or size ascendant or descendant.
 
-    npx hardhat contract-size --alpha-sort
+    npx hardhat contract-size --sort size,asc
 
 ### Check maximum contract sizes
 The plugin can be used to check that the smart contracts aren't bigger than the allowed maximum contract size of the Ethereum Mainnet (`24 KiB = 24576 bytes`). For example this can be used, to make a CI/CD pipeline fail, if a contract is bigger than allowed.

@@ -38,6 +38,7 @@
   "devDependencies": {
     "@types/chai": "^4.3.3",
     "@types/fs-extra": "^9.0.13",
+    "@types/lodash": "^4.14.182",
     "@types/mocha": "^9.1.1",
     "@types/node": "^18.6.5",
     "@types/util.promisify": "^1.0.4",
@@ -55,6 +56,8 @@
     "hardhat": "^2.10.1"
   },
   "dependencies": {
-    "cli-table3": "^0.6.2"
+    "cli-table3": "^0.6.2",
+    "colors": "^1.4.0",
+    "lodash": "^4.17.21"
   }
 }

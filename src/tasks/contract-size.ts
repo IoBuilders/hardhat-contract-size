@@ -2,18 +2,16 @@ import { task } from "hardhat/config";
 import { HardhatPluginError } from "hardhat/plugins";
 import { HardhatContractSizeConfig, HardhatRuntimeEnvironment } from "hardhat/types";
 
-import Table, { Cell, CrossTableRow, HorizontalTableRow, VerticalTableRow } from "cli-table3";
 import * as fs from "fs";
 import * as util from "util";
-import pjson from "../../package.json";
 import { basename } from "path";
-import { computeByteCodeSizeInKiB, formatByteCodeSize, convertToByte, formatKiBCodeSize } from "../utils/formatting";
+import { computeByteCodeSizeInKiB, formatByteCodeSize, convertToByte, formatKiBCodeSize, orderTable, drawTable, PLUGIN_NAME, convertFromByte } from "../utils/formatting";
+import colors from "colors";
 
 import "../types/type-extensions";
-import { TableContract } from "../types/types";
+import { TableContract, TableData } from "../types/types";
 
 const lstat = util.promisify(fs.lstat);
-const PLUGIN_NAME: string = pjson.name;
 const DEFAULT_MAX_CONTRACT_SIZE_IN_KIB: number = 24;
 
 const isValidCheckMaxSize = (checkMaxSize: boolean | number): boolean => {
@@ -68,17 +66,8 @@ const checkFile = async (filePath: string): Promise<void> => {
   }
 };
 
-function sortTable(alphaSort: boolean, table: Table.Table): void {
-  if (alphaSort) {
-    table.sort((a: any, b: any) => (a[0].toUpperCase() > b[0].toUpperCase() ? 1 : -1));
-  } else {
-    table.sort((a: any, b: any) => a[1] - b[1]);
-  }
-}
-
-
 task("contract-size", "Output the size of compiled contracts")
-  .addFlag("alphaSort", "Sort table entries in alphabetical order [true | false]")
+  .addOptionalParam("sort", "Sort table entries by name or size and ascendant or descendant order [size,asc]")
   .addOptionalParam(
     "checkMaxSize",
     "Check that the smart contracts aren't bigger than the allowed maximum contract size of the Ethereum Mainnet (24 KiB = 24576 bytes)"
@@ -90,7 +79,7 @@ task("contract-size", "Output the size of compiled contracts")
   .addFlag("sizeInBytes", "Shows the size of the contracts in Bytes, by default the size is shown in Kib")
   .setAction(async function (args, hre): Promise<void> {
     let {
-      alphaSort,
+      sort,
       checkMaxSize,
       contracts,
       disambiguatePaths,
@@ -99,7 +88,7 @@ task("contract-size", "Output the size of compiled contracts")
       sizeInBytes,
     }: HardhatContractSizeConfig = hre.config.contractSize;
 
-    alphaSort = !args.alphaSort ? alphaSort : args.alphaSort;
+    sort = !args.sort ? sort : args.sort;
     checkMaxSize = !args.checkMaxSize ? checkMaxSize : args.checkMaxSize;
     contracts = !args.contracts ? contracts : args.contracts.split(",");
     disambiguatePaths = !args.disambiguatePaths ? disambiguatePaths : args.disambiguatePaths;
@@ -111,13 +100,7 @@ task("contract-size", "Output the size of compiled contracts")
       throw new HardhatPluginError(PLUGIN_NAME, `--checkMaxSize: invalid value ${checkMaxSize}`);
     }
 
-    const table = new Table({
-      head: ["Contract", sizeInBytes ? "Size (Bytes)" : "Size (KiB)"],
-      style: {
-        head: ["bold", "white"],
-      },
-      colWidths: [70, sizeInBytes ? 18 : 12],
-    });
+    let tableData: TableData[] = [];
 
     const contractList: TableContract[] = await getContracts(hre, contracts, ignoreMocks, except);
     let totalKib: number = 0;
@@ -136,31 +119,43 @@ task("contract-size", "Output the size of compiled contracts")
       const kibCodeSize = computeByteCodeSizeInKiB(contractFile.deployedBytecode);
       totalKib += kibCodeSize;
 
-      table.push([
-        disambiguatePaths ? contract.nameContract : contract.name,
-        sizeInBytes ? formatByteCodeSize(convertToByte(kibCodeSize)) : formatKiBCodeSize(kibCodeSize),
-      ]);
+      tableData.push({
+        name: disambiguatePaths ? contract.nameContract : contract.name,
+        size: sizeInBytes ? formatByteCodeSize(convertToByte(kibCodeSize)) : formatKiBCodeSize(kibCodeSize),
+      });
     });
 
     await Promise.all(contractPromises);
 
-    // If alpha sort
-    sortTable(alphaSort, table);
+    // Sort tableData
+    if (sort && typeof sort === 'string') {
+      tableData = orderTable(sort, tableData);
+    }
 
-    table.push(["Total", sizeInBytes ? formatByteCodeSize(convertToByte(totalKib)) : formatKiBCodeSize(totalKib)]);
+    const table = drawTable(tableData, sizeInBytes, checkMaxSize)
+
+    table.push([
+      colors.bold("Total"), 
+      sizeInBytes ? formatByteCodeSize(convertToByte(totalKib)) : formatKiBCodeSize(totalKib)
+    ]);
 
     console.log(table.toString());
 
     if (checkMaxSize) {
-      const maxSize = checkMaxSize === true ? DEFAULT_MAX_CONTRACT_SIZE_IN_KIB : checkMaxSize;
+      const maxSize: number = checkMaxSize === true ? DEFAULT_MAX_CONTRACT_SIZE_IN_KIB : Number.parseFloat(checkMaxSize.toString());
+      let errorMsg: string = '';
 
-      table.forEach((row: HorizontalTableRow | VerticalTableRow | CrossTableRow, index: number): void => {
-        let entries: Cell[] = row as Cell[];
-        let contractName: string = entries[0]?.valueOf().toString() ?? "";
-        let value: string = entries[1]?.valueOf().toString() ?? "0";
-        if (Number.parseFloat(value) > maxSize && index !== table.length - 1) {
-          throw new HardhatPluginError(PLUGIN_NAME, `Contract ${contractName} is bigger than ${maxSize} KiB`);
+      tableData.forEach((row: TableData, index: number): void => {
+        let entries: TableData = row as TableData;
+        let contractName: string = entries.name ?? "";
+        let value: number = Number.parseFloat(entries.size.toString()) ?? 0;
+        if ((sizeInBytes ? convertFromByte(value) : value) > maxSize && index !== table.length - 1) {
+          errorMsg += `\nContract ${contractName} is bigger than ${maxSize} KiB`;
         }
       });
+
+      if (errorMsg !== '') {
+        throw new HardhatPluginError(PLUGIN_NAME, errorMsg);
+      }
     }
   });
