@@ -7,7 +7,7 @@ export const convertToByte = (valueKib: number): number => {
   return valueKib * VALUE_BYTES;
 };
 export const formatKiBCodeSize = (kibteCodeSize: number): string => {
-  return `${kibteCodeSize.toFixed(2)} KiB`;
+  return `${kibteCodeSize.toFixed(2)}`;
 };
 export const computeByteCodeSizeInKiB = (byteCode: any): number => {
   // -2 to remove 0x from the beginning of the string
