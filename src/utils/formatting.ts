@@ -12,7 +12,7 @@ export const VALUE_BYTES: number = 1024;
 const DEFAULT_MAX_CONTRACT_SIZE_IN_KIB: number = 24;
 
 export const formatByteCodeSize = (byteCodeSize: number): number => {
-  return Number.parseFloat(byteCodeSize.toFixed(2));
+  return Number.parseFloat(byteCodeSize.toFixed(0));
 };
 export const convertToByte = (valueKib: number): number => {
   return valueKib * VALUE_BYTES;
@@ -36,7 +36,8 @@ export const drawTable = (data: TableData[], sizeInBytes: boolean, checkMaxSize:
     style: {
       head: ["bold", "white"],
     },
-    colWidths: [70, sizeInBytes ? 18 : 12]
+    colWidths: [70, sizeInBytes ? 18 : 12],
+    colAligns: ["left", "right"]
   });
 
   data.forEach(row => {
