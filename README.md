@@ -2,7 +2,7 @@
 
 This plugin for Hardhat displays the contract size of all or a selection of Smart Contracts in Bytes.
 
-![Example table](./docs/img/5975b16e-9ba4-4af3-a256-a45a892a72d12.png)
+![Example table](./docs/img/5975b16e-9ba4-4af3-a256-a45a892a72d13.png)
 
     https://hardhat.org/
 
