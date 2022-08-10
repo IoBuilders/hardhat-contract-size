@@ -7,15 +7,13 @@ import * as fs from "fs";
 import * as util from "util";
 import pjson from "../../package.json";
 import { basename } from "path";
+import { computeByteCodeSizeInKiB, formatByteCodeSize, convertToByte, formatKiBCodeSize } from "../utils/formatting";
 
 import "../types/type-extensions";
 
 const lstat = util.promisify(fs.lstat);
-
-const PLUGIN_NAME = pjson.name;
-
+const PLUGIN_NAME : string = pjson.name;
 const DEFAULT_MAX_CONTRACT_SIZE_IN_KIB = 24;
-const VALUE_BYTES = 1024;
 
 const isValidCheckMaxSize = (checkMaxSize: boolean | number): boolean => {
   if (checkMaxSize === undefined) return true;
@@ -26,7 +24,7 @@ const getContracts = async (hre: HardhatRuntimeEnvironment, contractNames: strin
   const contractsDirectoryListArtifacts = await hre.artifacts.getArtifactPaths();
   const contractsDirectoryListContracts = await hre.artifacts.getAllFullyQualifiedNames();
 
-  contractNames = await getAllContractNames(contractsDirectoryListArtifacts, contractNames, ignoreMocks, except);
+  contractNames = await applyFilters(contractsDirectoryListArtifacts, contractNames, ignoreMocks, except);
   return contractNames.map((contractName: string) => {
     let name = basename(contractName).replace(".json", "");
     return {
@@ -37,7 +35,7 @@ const getContracts = async (hre: HardhatRuntimeEnvironment, contractNames: strin
   });
 };
 
-const getAllContractNames = async (contractsJSON: string[], contractNames: string[], ignoreMocks: boolean, except: string[]) => {
+const applyFilters = async (contractsJSON: string[], contractNames: string[], ignoreMocks: boolean, except: string[]) => {
   return contractsJSON.filter((file: string) => {
     if (!file.endsWith(".json")) return false;
     if (contractNames.length && !contractNames.some((m) => file.match(m))) return false;
@@ -48,36 +46,15 @@ const getAllContractNames = async (contractsJSON: string[], contractNames: strin
 };
 
 const checkFile = async (filePath: string) => {
-  let stat;
-
+  let stat: fs.Stats;
   try {
     stat = await lstat(filePath);
   } catch (error: any) {
     throw new HardhatPluginError(PLUGIN_NAME, `Error while checking file ${filePath}: ${error?.message}`);
   }
-
   if (!stat.isFile()) {
     throw new HardhatPluginError(PLUGIN_NAME, `Error: ${filePath} is not a valid file`);
   }
-};
-
-const formatByteCodeSize = (byteCodeSize: number) => {
-  return `${byteCodeSize.toFixed(2)}`;
-};
-
-const convertToByte = (valueKib: number) => {
-    return valueKib * VALUE_BYTES;
-}
-  
-const formatKiBCodeSize = (kibteCodeSize: number) => {
-return `${kibteCodeSize.toFixed(2)}`
-}
-
-const computeByteCodeSizeInKiB = (byteCode: any) => {
-  // -2 to remove 0x from the beginning of the string
-  // /2 because one byte consists of two hexadecimal values
-  // /1024 to convert to size from byte to kibibytes
-  return (byteCode.length - 2) / 2 / 1024;
 };
 
 task("contract-size", "Output the size of compiled contracts")
@@ -155,8 +132,8 @@ task("contract-size", "Output the size of compiled contracts")
       const maxSize = checkMaxSize === true ? DEFAULT_MAX_CONTRACT_SIZE_IN_KIB : checkMaxSize;
 
       table.forEach((row: HorizontalTableRow | VerticalTableRow | CrossTableRow, index: number): void => {
-        let entries = row as Cell[];
-        let contractName = entries[0]?.valueOf().toString() ?? "";
+        let entries: Cell[] = row as Cell[];
+        let contractName: string = entries[0]?.valueOf().toString() ?? "";
         let value = entries[1]?.valueOf().toString() ?? "0";
         if (Number.parseFloat(value) > maxSize && index !== table.length - 1) {
           throw new HardhatPluginError(PLUGIN_NAME, `Contract ${contractName} is bigger than ${maxSize} KiB`);
