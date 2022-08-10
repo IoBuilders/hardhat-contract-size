@@ -11,6 +11,9 @@ export const PLUGIN_NAME: string = pjson.name;
 export const VALUE_BYTES: number = 1024;
 const DEFAULT_MAX_CONTRACT_SIZE_IN_KIB: number = 24;
 
+export const formatWithThousandSeparator = (value: number | string) => {
+  return (typeof value === 'number' ? value.toString() : value).replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+}
 export const formatByteCodeSize = (byteCodeSize: number): number => {
   return Number.parseFloat(byteCodeSize.toFixed(0));
 };
@@ -37,7 +40,7 @@ export const drawTable = (data: TableData[], sizeInBytes: boolean, checkMaxSize:
       head: ["bold", "white"],
     },
     colWidths: [70, sizeInBytes ? 18 : 12],
-    colAligns: ["left", "right"]
+    colAligns: ["left", "right"],
   });
 
   data.forEach(row => {
@@ -87,18 +90,19 @@ export const colorFromSize = (maxSize: number, table: Table.Table, sizeInBytes: 
     const size: number = sizeInBytes ? convertFromByte(sizeTable) : sizeTable;
     const percentage80: number = (maxSize * 0.8);
     const name: string = getCellValueAsString(entries[0]);
-
+    let sizeFormatted = formatWithThousandSeparator(sizeTable);
+    
     if (size <= percentage80) {
       entries[0] = colors.green(name);
-      entries[1] = colors.green(sizeTable.toString());
+      entries[1] = colors.green(sizeFormatted);
     }
     if (size > percentage80 && size <= maxSize) {
       entries[0] = colors.yellow(name);
-      entries[1] = colors.yellow(sizeTable.toString());
+      entries[1] = colors.yellow(sizeFormatted);
     }
     if (size > maxSize) {
       entries[0] = colors.red(name);
-      entries[1] = colors.red(sizeTable.toString());
+      entries[1] = colors.red(sizeFormatted);
     }
   });
   return table;

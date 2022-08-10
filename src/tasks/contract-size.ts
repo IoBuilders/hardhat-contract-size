@@ -5,7 +5,7 @@ import { HardhatContractSizeConfig, HardhatRuntimeEnvironment } from "hardhat/ty
 import * as fs from "fs";
 import * as util from "util";
 import { basename } from "path";
-import { computeByteCodeSizeInKiB, formatByteCodeSize, convertToByte, formatKiBCodeSize, orderTable, drawTable, PLUGIN_NAME, convertFromByte } from "../utils/formatting";
+import { computeByteCodeSizeInKiB, formatWithThousandSeparator, formatByteCodeSize, convertToByte, formatKiBCodeSize, orderTable, drawTable, PLUGIN_NAME, convertFromByte } from "../utils/formatting";
 import colors from "colors";
 
 import "../types/type-extensions";
@@ -136,7 +136,7 @@ task("contract-size", "Output the size of compiled contracts")
 
     table.push([
       colors.bold("Total"), 
-      sizeInBytes ? formatByteCodeSize(convertToByte(totalKib)) : formatKiBCodeSize(totalKib)
+      formatWithThousandSeparator(sizeInBytes ? formatByteCodeSize(convertToByte(totalKib)) : formatKiBCodeSize(totalKib))
     ]);
 
     console.log(table.toString());
