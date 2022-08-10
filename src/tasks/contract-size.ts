@@ -1,18 +1,20 @@
 import { task } from "hardhat/config";
 import { HardhatPluginError } from "hardhat/plugins";
 import { HardhatContractSizeConfig, HardhatRuntimeEnvironment } from "hardhat/types";
-
+import { basename } from "path";
+import { computeByteCodeSizeInBytes } from "../utils/formatting";
+import { SizeUnit, TableContract } from "../types/types";
+import TableContracts, { TableData } from "../classes/TableContracts";
+import Size from "../classes/Size";
+import pjson from "../../package.json";
 import * as fs from "fs";
 import * as util from "util";
-import { basename } from "path";
-import { computeByteCodeSizeInKiB, formatWithThousandSeparator, formatByteCodeSize, convertToByte, formatKiBCodeSize, orderTable, drawTable, PLUGIN_NAME, convertFromByte } from "../utils/formatting";
-import colors from "colors";
-
 import "../types/type-extensions";
-import { TableContract, TableData } from "../types/types";
 
 const lstat = util.promisify(fs.lstat);
-const DEFAULT_MAX_CONTRACT_SIZE_IN_KIB: number = 24;
+export const PLUGIN_NAME: string = pjson.name;
+
+let tableData: TableData[] = [];
 
 const isValidCheckMaxSize = (checkMaxSize: boolean | number): boolean => {
   if (checkMaxSize === undefined) return true;
@@ -54,16 +56,65 @@ const applyFilters = async (
   });
 };
 
-const checkFile = async (filePath: string): Promise<void> => {
-  let stat: fs.Stats;
-  try {
-    stat = await lstat(filePath);
-  } catch (error) {
-    throw new HardhatPluginError(PLUGIN_NAME, `Error while checking file ${filePath}: ${(error as any)?.message ?? "[unkown]"}`);
+const parseTableData = async (
+  contracts: TableContract[],
+  disambiguatePaths: boolean = false,
+  sizeInBytes: boolean = false
+): Promise<TableData[]> => {
+  const checkFile = async (filePath: string): Promise<void> => {
+    let stat: fs.Stats;
+    try {
+      stat = await lstat(filePath);
+    } catch (error) {
+      throw new HardhatPluginError(PLUGIN_NAME, `Error while checking file ${filePath}: ${(error as any)?.message ?? "[unkown]"}`);
+    }
+    if (!stat.isFile()) {
+      throw new HardhatPluginError(PLUGIN_NAME, `Error: ${filePath} is not a valid file`);
+    }
+  };
+
+  const contractPromises = contracts.map(async (contract: any) => {
+    await checkFile(contract.file);
+
+    const contractFile = require(contract.file);
+    if (!("deployedBytecode" in contractFile)) {
+      throw new HardhatPluginError(PLUGIN_NAME, `Error: deployedBytecode not found in ${contract.file} (it is not a contract json file)`);
+    }
+
+    const byteSize = computeByteCodeSizeInBytes(contractFile.deployedBytecode);
+    const size = new Size(byteSize, sizeInBytes ? SizeUnit.Bytes : SizeUnit.Kibibytes);
+
+    tableData.push({
+      name: disambiguatePaths ? contract.nameContract : contract.name,
+      size,
+    });
+  });
+
+  await Promise.all(contractPromises);
+  return tableData;
+};
+
+const obtainParameters = (hre: HardhatRuntimeEnvironment, args: any): HardhatContractSizeConfig => {
+  // Obtained from config
+  let { sort, checkMaxSize, contracts, disambiguatePaths, except, ignoreMocks, sizeInBytes }: HardhatContractSizeConfig =
+    hre.config.contractSize;
+
+  // Config + parameters
+  let parameters = {
+    sort: !args.sort ? sort : args.sort,
+    checkMaxSize: !args.checkMaxSize ? checkMaxSize : args.checkMaxSize,
+    contracts: !args.contracts ? contracts : args.contracts.split(","),
+    disambiguatePaths: !args.disambiguatePaths ? disambiguatePaths : args.disambiguatePaths,
+    except: !args.except ? except : args.except.split(","),
+    ignoreMocks: !args.ignoreMocks ? ignoreMocks : args.ignoreMocks,
+    sizeInBytes: !args.sizeInBytes ? sizeInBytes : args.sizeInBytes,
+  } as HardhatContractSizeConfig;
+
+  if (!isValidCheckMaxSize(!!parameters.checkMaxSize)) {
+    throw new HardhatPluginError(PLUGIN_NAME, `checkMaxSize: invalid value ${parameters.checkMaxSize}`);
   }
-  if (!stat.isFile()) {
-    throw new HardhatPluginError(PLUGIN_NAME, `Error: ${filePath} is not a valid file`);
-  }
+
+  return parameters;
 };
 
 task("contract-size", "Output the size of compiled contracts")
@@ -78,84 +129,14 @@ task("contract-size", "Output the size of compiled contracts")
   .addFlag("ignoreMocks", 'Wether to ignore contracts that have a name that ends with "Mock"')
   .addFlag("sizeInBytes", "Shows the size of the contracts in Bytes, by default the size is shown in Kib")
   .setAction(async function (args, hre): Promise<void> {
-    let {
-      sort,
-      checkMaxSize,
-      contracts,
-      disambiguatePaths,
-      except,
-      ignoreMocks,
-      sizeInBytes,
-    }: HardhatContractSizeConfig = hre.config.contractSize;
-
-    sort = !args.sort ? sort : args.sort;
-    checkMaxSize = !args.checkMaxSize ? checkMaxSize : args.checkMaxSize;
-    contracts = !args.contracts ? contracts : args.contracts.split(",");
-    disambiguatePaths = !args.disambiguatePaths ? disambiguatePaths : args.disambiguatePaths;
-    except = !args.except ? except : args.except.split(",");
-    ignoreMocks = !args.ignoreMocks ? ignoreMocks : args.ignoreMocks;
-    sizeInBytes = !args.sizeInBytes ? sizeInBytes : args.sizeInBytes;
-
-    if (!isValidCheckMaxSize(!!checkMaxSize)) {
-      throw new HardhatPluginError(PLUGIN_NAME, `--checkMaxSize: invalid value ${checkMaxSize}`);
-    }
-
-    let tableData: TableData[] = [];
-
+    let { sort, checkMaxSize, contracts, disambiguatePaths, except, ignoreMocks, sizeInBytes }: HardhatContractSizeConfig =
+      obtainParameters(hre, args);
     const contractList: TableContract[] = await getContracts(hre, contracts, ignoreMocks, except);
-    let totalKib: number = 0;
 
     if (contractList.length == 0) throw new HardhatPluginError(PLUGIN_NAME, `There are no compiled contracts to calculate the size.`);
 
-    const contractPromises = contractList.map(async (contract: any) => {
-      await checkFile(contract.file);
+    let tableData: TableData[] = await parseTableData(contractList, disambiguatePaths, sizeInBytes);
+    let table = new TableContracts(tableData, sort, sizeInBytes ? SizeUnit.Bytes : SizeUnit.Kibibytes, checkMaxSize);
 
-      const contractFile = require(contract.file);
-
-      if (!("deployedBytecode" in contractFile)) {
-        throw new HardhatPluginError(PLUGIN_NAME, `Error: deployedBytecode not found in ${contract.file} (it is not a contract json file)`);
-      }
-
-      const kibCodeSize = computeByteCodeSizeInKiB(contractFile.deployedBytecode);
-      totalKib += kibCodeSize;
-
-      tableData.push({
-        name: disambiguatePaths ? contract.nameContract : contract.name,
-        size: sizeInBytes ? formatByteCodeSize(convertToByte(kibCodeSize)) : formatKiBCodeSize(kibCodeSize),
-      });
-    });
-
-    await Promise.all(contractPromises);
-
-    // Sort tableData
-    if (sort && typeof sort === 'string') {
-      tableData = orderTable(sort, tableData);
-    }
-
-    const table = drawTable(tableData, sizeInBytes, checkMaxSize)
-
-    table.push([
-      colors.bold("Total"), 
-      formatWithThousandSeparator(sizeInBytes ? formatByteCodeSize(convertToByte(totalKib)) : formatKiBCodeSize(totalKib))
-    ]);
-
-    console.log(table.toString());
-
-    if (checkMaxSize) {
-      const maxSize: number = checkMaxSize === true ? DEFAULT_MAX_CONTRACT_SIZE_IN_KIB : Number.parseFloat(checkMaxSize.toString());
-      let errorMsg: string = '';
-
-      tableData.forEach((row: TableData, index: number): void => {
-        let entries: TableData = row as TableData;
-        let contractName: string = entries.name ?? "";
-        let value: number = Number.parseFloat(entries.size.toString()) ?? 0;
-        if ((sizeInBytes ? convertFromByte(value) : value) > maxSize && index !== table.length - 1) {
-          errorMsg += `\nContract ${contractName} is bigger than ${maxSize} KiB`;
-        }
-      });
-
-      if (errorMsg !== '') {
-        throw new HardhatPluginError(PLUGIN_NAME, errorMsg);
-      }
-    }
+    table.drawTable();
   });

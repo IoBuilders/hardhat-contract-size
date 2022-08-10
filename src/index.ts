@@ -1,4 +1,4 @@
 import "./types/type-extensions";
 import "./tasks/contract-size";
-import "./compiler";
+import "./tasks/compiler";
 import "./config/config";

@@ -28,7 +28,7 @@ declare module "hardhat/types/config" {
   // after it has been resolved. This is the type used during the execution
   // of tasks, tests and scripts.
   export interface HardhatContractSizeConfig {
-    sort: string | boolean;
+    sort: string;
     contracts: Array<string>;
     checkMaxSize: boolean | number;
     disambiguatePaths: boolean;
