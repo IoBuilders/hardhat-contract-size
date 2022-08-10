@@ -45,7 +45,7 @@ You can pass some arguments to the command, for example:
 
 | Option | Description | Default |
 |--|--|--|
-| `sort` | Sort table entries by name or size and ascendant or descendant order. The table is sorted by size ascendant by default. | `size,asc` |
+| `sort` | 	Sort table entries by name or size and ascendant or descendant order. The table is sorted by size ascendant by default. It can be any combination of "`name \| size, asc \| desc`" | `size,asc` |
 | `checkMaxSize` | Check that the smart contracts aren't bigger than the allowed maximum contract size of the Ethereum Mainnet (`24 KiB = 24576 bytes`) | `false` |
 | `contracts` | Array of string matchers (regex) to determine what contracts to include `*.Mock.sol,ERC20`. | `[]` |
 | `disambiguatePaths` | Whether to output the full path to the compilation artifact (relative to the Hardhat root directory). | `false` |
