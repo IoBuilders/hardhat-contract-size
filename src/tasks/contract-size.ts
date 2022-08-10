@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import { HardhatPluginError } from "hardhat/plugins";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { HardhatContractSizeConfig, HardhatRuntimeEnvironment } from "hardhat/types";
 
 import Table, { Cell, CrossTableRow, HorizontalTableRow, VerticalTableRow } from "cli-table3";
 import * as fs from "fs";
@@ -10,32 +10,43 @@ import { basename } from "path";
 import { computeByteCodeSizeInKiB, formatByteCodeSize, convertToByte, formatKiBCodeSize } from "../utils/formatting";
 
 import "../types/type-extensions";
+import { TableContract } from "../types/types";
 
 const lstat = util.promisify(fs.lstat);
-const PLUGIN_NAME : string = pjson.name;
-const DEFAULT_MAX_CONTRACT_SIZE_IN_KIB = 24;
+const PLUGIN_NAME: string = pjson.name;
+const DEFAULT_MAX_CONTRACT_SIZE_IN_KIB: number = 24;
 
 const isValidCheckMaxSize = (checkMaxSize: boolean | number): boolean => {
   if (checkMaxSize === undefined) return true;
   return checkMaxSize === true || !Number.isNaN(checkMaxSize);
 };
 
-const getContracts = async (hre: HardhatRuntimeEnvironment, contractNames: string[], ignoreMocks: boolean, except: string[]) => {
-  const contractsDirectoryListArtifacts = await hre.artifacts.getArtifactPaths();
-  const contractsDirectoryListContracts = await hre.artifacts.getAllFullyQualifiedNames();
+const getContracts = async (
+  hre: HardhatRuntimeEnvironment,
+  contractNames: string[],
+  ignoreMocks: boolean,
+  except: string[]
+): Promise<TableContract[]> => {
+  const contractsDirectoryListArtifacts: string[] = await hre.artifacts.getArtifactPaths();
+  const contractsDirectoryListContracts: string[] = await hre.artifacts.getAllFullyQualifiedNames();
 
   contractNames = await applyFilters(contractsDirectoryListArtifacts, contractNames, ignoreMocks, except);
   return contractNames.map((contractName: string) => {
-    let name = basename(contractName).replace(".json", "");
+    let name: string = basename(contractName).replace(".json", "");
     return {
       file: contractName,
-      nameContract: contractsDirectoryListContracts.find((path) => path.indexOf(name) !== -1)?.split(":")[0],
+      nameContract: contractsDirectoryListContracts.find((path) => path.indexOf(name) !== -1)?.split(":")[0] ?? "",
       name: name,
     };
   });
 };
 
-const applyFilters = async (contractsJSON: string[], contractNames: string[], ignoreMocks: boolean, except: string[]) => {
+const applyFilters = async (
+  contractsJSON: string[],
+  contractNames: string[],
+  ignoreMocks: boolean,
+  except: string[]
+): Promise<string[]> => {
   return contractsJSON.filter((file: string) => {
     if (!file.endsWith(".json")) return false;
     if (contractNames.length && !contractNames.some((m) => file.match(m))) return false;
@@ -45,12 +56,12 @@ const applyFilters = async (contractsJSON: string[], contractNames: string[], ig
   });
 };
 
-const checkFile = async (filePath: string) => {
+const checkFile = async (filePath: string): Promise<void> => {
   let stat: fs.Stats;
   try {
     stat = await lstat(filePath);
-  } catch (error: any) {
-    throw new HardhatPluginError(PLUGIN_NAME, `Error while checking file ${filePath}: ${error?.message}`);
+  } catch (error) {
+    throw new HardhatPluginError(PLUGIN_NAME, `Error while checking file ${filePath}: ${(error as any)?.message ?? "[unkown]"}`);
   }
   if (!stat.isFile()) {
     throw new HardhatPluginError(PLUGIN_NAME, `Error: ${filePath} is not a valid file`);
@@ -68,14 +79,22 @@ task("contract-size", "Output the size of compiled contracts")
   .addOptionalParam("except", 'Array of string matchers to determine what contracts to ignore ["ERC20*"]')
   .addFlag("ignoreMocks", 'Wether to ignore contracts that have a name that ends with "Mock"')
   .addFlag("sizeInBytes", "Shows the size of the contracts in Bytes, by default the size is shown in Kib")
-  .setAction(async function (args, hre) {
-    let { alphaSort, checkMaxSize, contracts, disambiguatePaths, except, ignoreMocks, sizeInBytes } = hre.config.contractSize;
+  .setAction(async function (args, hre): Promise<void> {
+    let {
+      alphaSort,
+      checkMaxSize,
+      contracts,
+      disambiguatePaths,
+      except,
+      ignoreMocks,
+      sizeInBytes,
+    }: HardhatContractSizeConfig = hre.config.contractSize;
 
     alphaSort = !args.alphaSort ? alphaSort : args.alphaSort;
     checkMaxSize = !args.checkMaxSize ? checkMaxSize : args.checkMaxSize;
-    contracts = !args.contracts ? contracts : args.contracts.split(',');
+    contracts = !args.contracts ? contracts : args.contracts.split(",");
     disambiguatePaths = !args.disambiguatePaths ? disambiguatePaths : args.disambiguatePaths;
-    except = !args.except ? except : args.except.split(',');
+    except = !args.except ? except : args.except.split(",");
     ignoreMocks = !args.ignoreMocks ? ignoreMocks : args.ignoreMocks;
     sizeInBytes = !args.sizeInBytes ? sizeInBytes : args.sizeInBytes;
 
@@ -91,9 +110,8 @@ task("contract-size", "Output the size of compiled contracts")
       colWidths: [70, sizeInBytes ? 18 : 12],
     });
 
-    const contractList = await getContracts(hre, contracts, ignoreMocks, except);
-
-    let totalKib = 0;
+    const contractList: TableContract[] = await getContracts(hre, contracts, ignoreMocks, except);
+    let totalKib: number = 0;
 
     if (contractList.length == 0) throw new HardhatPluginError(PLUGIN_NAME, `There are no compiled contracts to calculate the size.`);
 
@@ -134,7 +152,7 @@ task("contract-size", "Output the size of compiled contracts")
       table.forEach((row: HorizontalTableRow | VerticalTableRow | CrossTableRow, index: number): void => {
         let entries: Cell[] = row as Cell[];
         let contractName: string = entries[0]?.valueOf().toString() ?? "";
-        let value = entries[1]?.valueOf().toString() ?? "0";
+        let value: string = entries[1]?.valueOf().toString() ?? "0";
         if (Number.parseFloat(value) > maxSize && index !== table.length - 1) {
           throw new HardhatPluginError(PLUGIN_NAME, `Contract ${contractName} is bigger than ${maxSize} KiB`);
         }
