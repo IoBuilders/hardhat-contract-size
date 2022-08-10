@@ -132,11 +132,9 @@ task("contract-size", "Output the size of compiled contracts")
     let { sort, checkMaxSize, contracts, disambiguatePaths, except, ignoreMocks, sizeInBytes }: HardhatContractSizeConfig =
       obtainParameters(hre, args);
     const contractList: TableContract[] = await getContracts(hre, contracts, ignoreMocks, except);
-
     if (contractList.length == 0) throw new HardhatPluginError(PLUGIN_NAME, `There are no compiled contracts to calculate the size.`);
-
     let tableData: TableData[] = await parseTableData(contractList, disambiguatePaths, sizeInBytes);
     let table = new TableContracts(tableData, sort, sizeInBytes ? SizeUnit.Bytes : SizeUnit.Kibibytes, checkMaxSize);
-
+    
     table.drawTable();
   });

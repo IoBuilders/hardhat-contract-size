@@ -51,7 +51,7 @@ export default class TableContracts {
     return [colors.white(colors.bold("Total")), colors.white(new Size(totalSize, this.format).getValueFormatted())];
   }
 
-  private isLastRow(index: number): boolean{
+  private isLastRow(index: number): boolean {
     return index === this.data.length;
   }
 
@@ -59,12 +59,12 @@ export default class TableContracts {
     const getSorting = (sort: string): Many<boolean | "asc" | "desc"> => {
       return sort === "desc" ? "desc" : "asc";
     };
-    if(!sort) return tableData;
+    if (!sort) return tableData;
 
     let sortOptions: string[] = sort.split(",");
     const type: string = sortOptions[0] ?? "size";
     const order: Many<boolean | "asc" | "desc"> = getSorting(sortOptions[1]);
-    const getTypeOrderVal = (x: TableData) => (x.size.getValue());
+    const getTypeOrderVal = (x: TableData) => x.size.getValue();
 
     if (!type && !order) {
       throw new HardhatPluginError(PLUGIN_NAME, "Warning: sort default by name and asc.");
@@ -78,7 +78,7 @@ export default class TableContracts {
       throw new HardhatPluginError(PLUGIN_NAME, "Warning: invalid value order (valid values asc or desc).");
     }
 
-    tableData = lodash.orderBy(tableData, type === "name" ? type: getTypeOrderVal, order);
+    tableData = lodash.orderBy(tableData, type === "name" ? type : getTypeOrderVal, order);
     return tableData;
   }
 
@@ -112,10 +112,13 @@ export default class TableContracts {
 
   private checkContractsMaxSize(): void {
     if (!this.checkMaxSize) return;
-    let errorMsg: string = "\n";
+    let errorMsg: string = "";
 
     this.data.forEach((row: TableData, index: number): void => {
       if (row.size.getValueInKib() > this.maxSize && !this.isLastRow(index)) {
+        if (index === 0) {
+          errorMsg += "\n";
+        }
         errorMsg += `\n\tContract ${row.name ?? ""} is bigger than ${this.maxSize} KiB`;
       }
     });
@@ -131,7 +134,7 @@ export default class TableContracts {
     };
 
     if (!this.checkMaxSize) return table;
-     
+
     table.map((row: HorizontalTableRow | VerticalTableRow | CrossTableRow, index: number) => {
       let entries: Cell[] = row as Cell[];
       const percentage80: number = this.maxSize * 0.8;
