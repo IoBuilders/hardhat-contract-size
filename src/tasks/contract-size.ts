@@ -68,6 +68,15 @@ const checkFile = async (filePath: string): Promise<void> => {
   }
 };
 
+function sortTable(alphaSort: boolean, table: Table.Table): void {
+  if (alphaSort) {
+    table.sort((a: any, b: any) => (a[0].toUpperCase() > b[0].toUpperCase() ? 1 : -1));
+  } else {
+    table.sort((a: any, b: any) => a[1] - b[1]);
+  }
+}
+
+
 task("contract-size", "Output the size of compiled contracts")
   .addFlag("alphaSort", "Sort table entries in alphabetical order [true | false]")
   .addOptionalParam(
@@ -136,11 +145,7 @@ task("contract-size", "Output the size of compiled contracts")
     await Promise.all(contractPromises);
 
     // If alpha sort
-    if (alphaSort) {
-      table.sort((a: any, b: any) => (a[0].toUpperCase() > b[0].toUpperCase() ? 1 : -1));
-    } else {
-      table.sort((a: any, b: any) => a[1] - b[1]);
-    }
+    sortTable(alphaSort, table);
 
     table.push(["Total", sizeInBytes ? formatByteCodeSize(convertToByte(totalKib)) : formatKiBCodeSize(totalKib)]);
 
