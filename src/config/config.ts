@@ -8,7 +8,7 @@ import {
 extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) => {
   // Default values
   const configEntry = Object.assign({}, userConfig.contractSize) ?? {};
-  const sort = userConfig.contractSize?.sort ?? false;
+  const sort = userConfig.contractSize?.sort ?? "size,asc";
   const checkMaxSize = userConfig.contractSize?.checkMaxSize ?? false;
   const contracts = userConfig.contractSize?.contracts ?? [];
   const disambiguatePaths = userConfig.contractSize?.disambiguatePaths ?? false;
