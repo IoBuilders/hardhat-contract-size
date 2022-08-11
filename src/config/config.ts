@@ -4,7 +4,7 @@ import { isGeneratorObject } from "util/types";
 
 extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) => {
   // Default values
-  const defaultValues: HardhatContractSizeUserConfig = {
+  const defaultValues: HardhatContractSizeConfig = {
     sort: "size,asc",
     checkMaxSize: false,
     contracts: [],
@@ -15,6 +15,7 @@ extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) =>
     sizeInBytes: false,
   };
 
+  // Check for user config
   const configEntry = Object.assign({}, userConfig.contractSize) ?? {};
   const sort = userConfig.contractSize?.sort ?? defaultValues.sort;
   const checkMaxSize = userConfig.contractSize?.checkMaxSize ?? defaultValues.checkMaxSize;
