@@ -4,6 +4,8 @@ This plugin for Hardhat displays the contract size of all or a selection of Smar
 
 ![Example table](./docs/img/contract-sizes.png)
 
+Find out more at:
+
     https://hardhat.org/
 
 
@@ -24,8 +26,7 @@ The command can be executed without any arguments to display the size of all con
 ## ⚙️ Configuration
 You don’t need to add anything to the config file to get started, it will run every time you compile by default
 
-You can modify the hardhat.config.js file with the following options:
-
+You can customize the hardhat.config.js file with the following options:
 
     contractSize: {
         sort: "size,asc",
@@ -33,7 +34,7 @@ You can modify the hardhat.config.js file with the following options:
         contracts: ["HTS.sol"],
         disambiguatePaths: false,
         ignoreMocks: true,
-        except: ["ERC20*."], // We want to exclude all contracts that start with ERC20,
+        except: ["ERC20*."],
         sizeInBytes: false
     }
 
@@ -65,10 +66,10 @@ You can pass some arguments to the command, for example:
     solidity: {
         version: "0.8.10",
         settings: {
-        optimizer: {
-            enabled: true,
-            runs: 100,
-        },
+            optimizer: {
+                enabled: true,
+                runs: 100,
+            },
         },
     },
     contractSize: {
