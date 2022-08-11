@@ -1,21 +1,29 @@
 import { extendConfig } from "hardhat/config";
-import {
-  HardhatConfig,
-  HardhatContractSizeConfig,
-  HardhatUserConfig
-} from "hardhat/types";
+import { HardhatConfig, HardhatContractSizeConfig, HardhatContractSizeUserConfig, HardhatUserConfig } from "hardhat/types";
+import { isGeneratorObject } from "util/types";
 
 extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) => {
   // Default values
+  const defaultValues: HardhatContractSizeUserConfig = {
+    sort: "size,asc",
+    checkMaxSize: false,
+    contracts: [],
+    disambiguatePaths: false,
+    except: [],
+    ignoreMocks: false,
+    runOnCompile: true,
+    sizeInBytes: false,
+  };
+
   const configEntry = Object.assign({}, userConfig.contractSize) ?? {};
-  const sort = userConfig.contractSize?.sort ?? "size,asc";
-  const checkMaxSize = userConfig.contractSize?.checkMaxSize ?? false;
-  const contracts = userConfig.contractSize?.contracts ?? [];
-  const disambiguatePaths = userConfig.contractSize?.disambiguatePaths ?? false;
-  const except = userConfig.contractSize?.except ?? [];
-  const ignoreMocks = userConfig.contractSize?.ignoreMocks ?? false;
-  const runOnCompile = userConfig.contractSize?.runOnCompile ?? true;
-  const sizeInBytes = userConfig.contractSize?.sizeInBytes ?? false;
+  const sort = userConfig.contractSize?.sort ?? defaultValues.sort;
+  const checkMaxSize = userConfig.contractSize?.checkMaxSize ?? defaultValues.checkMaxSize;
+  const contracts = userConfig.contractSize?.contracts ?? defaultValues.contracts;
+  const disambiguatePaths = userConfig.contractSize?.disambiguatePaths ?? defaultValues.disambiguatePaths;
+  const except = userConfig.contractSize?.except ?? defaultValues.except;
+  const ignoreMocks = userConfig.contractSize?.ignoreMocks ?? defaultValues.ignoreMocks;
+  const runOnCompile = userConfig.contractSize?.runOnCompile ?? defaultValues.runOnCompile;
+  const sizeInBytes = userConfig.contractSize?.sizeInBytes ?? defaultValues.sizeInBytes;
 
   configEntry.sort = sort;
   configEntry.checkMaxSize = checkMaxSize;
